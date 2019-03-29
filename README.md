@@ -55,6 +55,10 @@ go build
 Cross Compile sqlite3 <https://github.com/mattn/go-sqlite3/issues/384>
 
 ~~~
+brew install FiloSottile/musl-cross/musl-cross
+~~~
+
+~~~
 CC=x86_64-linux-musl-gcc CXX=x86_64-linux-musl-g++ GOARCH=amd64 GOOS=linux CGO_ENABLED=1 go build -ldflags "-linkmode external -extldflags -static" -o artifactory-s3-export-linux
 ~~~
 
