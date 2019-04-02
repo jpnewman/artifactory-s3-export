@@ -5,11 +5,13 @@ data/
 mysql/
 
 *.yaml
-repos.txt
+*.txt
 
 *.log
 
 *.db
+
+debug
 
 # Binaries for programs and plugins
 *.exe
