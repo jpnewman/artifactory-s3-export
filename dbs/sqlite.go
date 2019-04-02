@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/samonzeweb/godb"
 	"github.com/samonzeweb/godb/adapters/sqlite"
 )
 
+// InitSqliteDb - Init SQLite DB Connection
 func InitSqliteDb(filename string) *godb.DB {
 	db, err := godb.Open(sqlite.Adapter, filename)
 	if err != nil {
@@ -24,6 +26,7 @@ func InitSqliteDb(filename string) *godb.DB {
 	return db
 }
 
+// CreateTable - Create Table
 func CreateTable(db *godb.DB, obj interface{}) {
 	buffer := bytes.NewBufferString("")
 
@@ -42,7 +45,7 @@ func CreateTable(db *godb.DB, obj interface{}) {
 			buffer.WriteString(", ")
 		}
 
-		columnName := tField.Tag.Get("db")
+		columnName := strings.Split(tField.Tag.Get("db"), ",")[0]
 		buffer.WriteString(columnName)
 		buffer.WriteString(" ")
 
