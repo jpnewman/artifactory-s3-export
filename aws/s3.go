@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/golang/glog"
 	dbHelper "github.com/jpnewman/artifactory-s3-export/dbs"
 	"github.com/jpnewman/artifactory-s3-export/models"
 	"github.com/samonzeweb/godb"
@@ -17,7 +18,7 @@ import (
 
 // GetS3Objects - Get S3 Objects
 func GetS3Objects(s *session.Session, sqliteDb *godb.DB, repo string) {
-	// fmt.Println("Updating S3 Objects in database")
+	glog.Info("Updating S3 Objects in database")
 	s3Key := path.Join(viper.GetString("aws.s3_key"), repo)
 
 	s3svc := s3.New(s)
@@ -59,7 +60,7 @@ func CheckS3ObjectExists(s *session.Session, s3Key string) bool {
 
 // UploadFileToS3 - Upload File to S3.
 func UploadFileToS3(s *session.Session, filePath string, s3Key string) (models.S3Object, error) {
-	// fmt.Printf("Uploading file to S3: %s", fileDir)
+	glog.Infof("Uploading file to S3: %s\n", filePath)
 	var s3Obj models.S3Object
 
 	file, err := os.Open(filePath)

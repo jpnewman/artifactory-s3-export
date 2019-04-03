@@ -91,9 +91,9 @@ func queryPackages(db *sql.DB, sqliteDb *godb.DB, awsSession *session.Session, r
 				node.RepoFileError = ""
 			}
 
-			// fmt.Printf("  %d: %s - %s/%s (%s)\n", i, node.NodeName, node.Sha1Actual.String[0:2], node.Sha1Actual.String, humanize.Bytes(node.BinLength))
+			glog.Infof("  %d: %s - %s/%s (%s)\n", i, node.NodeName, node.Sha1Actual.String[0:2], node.Sha1Actual.String, humanize.Bytes(node.BinLength))
 		} else {
-			fmt.Printf("  %d: %s - NULL/NULL (%s)\n", i, node.NodeName, humanize.Bytes(node.BinLength))
+			glog.Infof("  %d: %s - NULL/NULL (%s)\n", i, node.NodeName, humanize.Bytes(node.BinLength))
 		}
 
 		if node.BinLength == node.RepoFileSize {
