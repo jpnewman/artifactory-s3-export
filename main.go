@@ -14,7 +14,6 @@ import (
 	configHelper "github.com/jpnewman/artifactory-s3-export/config"
 	dbHelper "github.com/jpnewman/artifactory-s3-export/dbs"
 	"github.com/jpnewman/artifactory-s3-export/models"
-	"github.com/mattn/go-sqlite3"
 	"github.com/samonzeweb/godb"
 
 	"github.com/dustin/go-humanize"
@@ -44,9 +43,9 @@ func queryPackages(db *sql.DB, sqliteDb *godb.DB, awsSession *session.Session, r
 	var results *sql.Rows
 	var err error
 	if viper.IsSet("mysql.select_limit") {
-		results, err = db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name REGEXP '\\.nupkg$' AND node_type = 1 AND repo = ? LIMIT ?", repo, viper.GetInt64("mysql.select_limit"))
+		results, err = db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name REGEXP '\\.nupkg$' AND node_type = 1 AND repo = ? LIMIT ?;", repo, viper.GetInt64("mysql.select_limit"))
 	} else {
-		results, err = db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name REGEXP '\\.nupkg$' AND node_type = 1 AND repo = ?", repo)
+		results, err = db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name REGEXP '\\.nupkg$' AND node_type = 1 AND repo = ?;", repo)
 	}
 
 	if err != nil {
@@ -98,25 +97,28 @@ func queryPackages(db *sql.DB, sqliteDb *godb.DB, awsSession *session.Session, r
 		}
 
 		if node.BinLength == node.RepoFileSize {
-			err = awsHelper.UploadFileToS3(awsSession, &node)
-			if err != nil {
-				node.UploadError = err.Error()
-			} else {
-				node.UploadError = ""
-			}
-		}
+			filePath := path.Join(viper.GetString("repo.filestore_path"), node.RepoFilePath)
+			s3Key := path.Join(viper.GetString("aws.s3_key"), node.Repo, node.NodeName)
 
-		err = sqliteDb.Insert(&node).Do()
-		if sqliteErr, ok := err.(sqlite3.Error); ok {
-			if sqliteErr.Code == sqlite3.ErrConstraint {
-				err = sqliteDb.Update(&node).Do()
+			var s3Obj models.S3Object
+			selectErr := sqliteDb.Select(&s3Obj).
+				Where("key = ?", s3Key).
+				Do()
+
+			if selectErr == sql.ErrNoRows {
+				s3Obj, err = awsHelper.UploadFileToS3(awsSession, filePath, s3Key)
 				if err != nil {
 					panic(err.Error())
 				}
-			} else {
+			} else if err != nil {
 				panic(err.Error())
 			}
+
+			s3Obj.NodeID = node.NodeID
+			dbHelper.InsertOrUpdate(sqliteDb, &s3Obj)
 		}
+
+		dbHelper.InsertOrUpdate(sqliteDb, &node)
 	}
 
 	fmt.Printf("%s (%d) [%s]\n", repo, i, humanize.Bytes(c))
@@ -143,13 +145,16 @@ func main() {
 	fmt.Println("Export Artifactory to S3...")
 	configHelper.LoadConfig("config")
 
-	db := dbHelper.InitMySqlDb(viper.GetString("mysql.connection_string"))
+	db := dbHelper.InitMySQLDb(viper.GetString("mysql.connection_string"))
 	defer db.Close()
 
 	awsSession := awsHelper.InitAWSSession()
 	sqliteDb := dbHelper.InitSqliteDb("./node.db")
+
 	var node models.Node
 	dbHelper.CreateTable(sqliteDb, &node)
+	var s3Obj models.S3Object
+	dbHelper.CreateTable(sqliteDb, &s3Obj)
 
 	defer sqliteDb.Close()
 
@@ -163,6 +168,8 @@ func main() {
 	for scanner.Scan() {
 		repo := scanner.Text()
 		glog.Info(repo)
+
+		awsHelper.GetS3Objects(awsSession, sqliteDb, repo)
 		queryPackages(db, sqliteDb, awsSession, repo)
 	}
 

@@ -6,7 +6,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-func InitMySqlDb(connectionString string) *sql.DB {
+// InitMySQLDb - Init MySQL Database connection
+func InitMySQLDb(connectionString string) *sql.DB {
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
 		panic(err.Error())

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// InitAWSSession - Init AWS Session
 func InitAWSSession() *session.Session {
 	s, err := session.NewSession(&aws.Config{
 		Region:      aws.String(viper.GetString("aws.aws_region")),

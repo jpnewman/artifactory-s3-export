@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/mattn/go-sqlite3"
 	"github.com/samonzeweb/godb"
 	"github.com/samonzeweb/godb/adapters/sqlite"
 )
@@ -59,5 +60,20 @@ func CreateTable(db *godb.DB, obj interface{}) {
 	_, err := db.CurrentDB().Exec(buffer.String())
 	if err != nil {
 		panic(fmt.Errorf("Create Table Error: %s", err))
+	}
+}
+
+// InsertOrUpdate - Insert or Update a record
+func InsertOrUpdate(sqliteDb *godb.DB, record interface{}) {
+	err := sqliteDb.Insert(record).Do()
+	if sqliteErr, ok := err.(sqlite3.Error); ok {
+		if sqliteErr.Code == sqlite3.ErrConstraint {
+			err = sqliteDb.Update(record).Do()
+			if err != nil {
+				panic(err.Error())
+			}
+		} else {
+			panic(err.Error())
+		}
 	}
 }

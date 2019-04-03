@@ -3,7 +3,7 @@ package models
 import (
 	"database/sql"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // Needed for SQL Types.
 )
 
 /*
@@ -28,8 +28,6 @@ type Node struct {
 	Md5Original      sql.NullString `db:"md5_original" sqlite:"bigint(1024)"`
 	Sha256           sql.NullString `db:"sha256" sqlite:"bigint(64)"`
 	RepoPathChecksum sql.NullString `db:"repo_path_checksum" sqlite:"bigint(40)"`
-	Uploaded         bool           `db:"uploaded" sqlite:"tinyint(4)"`
-	UploadError      string         `db:"upload_error" sqlite:"bigint(1024)"`
 	RepoFilePath     string         `db:"repo_file_path" sqlite:"bigint(1024)"`
 	RepoFileSize     uint64         `db:"repo_file_size" sqlite:"bigint(20)"`
 	RepoFileError    string         `db:"repo_file_error" sqlite:"bigint(1024)"`
