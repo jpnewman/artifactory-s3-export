@@ -47,6 +47,7 @@ func queryPackages(db *sql.DB, sqliteDb *godb.DB, awsSession *session.Session, r
 	} else {
 		results, err = db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name REGEXP '\\.nupkg$' AND node_type = 1 AND repo = ?;", repo)
 	}
+	defer results.Close()
 
 	if err != nil {
 		panic(err.Error()) // TODO: Handling error.
