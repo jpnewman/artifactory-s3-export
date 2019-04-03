@@ -11,7 +11,8 @@ Create ```config.yaml``` file with content: -
 mysql:
   connection_string: root:<MYSQL_PASSWORD>@tcp(localhost:3306)/artdb
   select_limit: 10
-  max_connections: 150
+  max_idle_connections: 5
+  max_connections: 25
   max_lifetime: 10s
 repo:
   list_file: repos.txt
@@ -35,7 +36,8 @@ Where: -
 Notes: -
 
 - If ```select_limit:``` is defined it'll limit the number of records return from the MySQL query.
-- ```max_connections``` MySQL Max Connections. If not defined default to 150.
+- ```max_idle_connections``` MySQL Max Idle Connections. If not defined default to 5.
+- ```max_connections``` MySQL Max Connections. If not defined default to 25.
 - ```max_lifetime``` MySQL Max Connection Lifetime. If not defined default to 10 seconds.
 
 ## Repository list

@@ -13,7 +13,7 @@ func InitMySQLDb(connectionString string) *sql.DB {
 		panic(err.Error())
 	}
 
-	db.SetMaxIdleConns(0)
+	db.SetMaxIdleConns(viper.GetInt("mysql.max_idle_connections"))
 	db.SetMaxOpenConns(viper.GetInt("mysql.max_connections"))
 	db.SetConnMaxLifetime(viper.GetDuration("mysql.max_lifetime"))
 

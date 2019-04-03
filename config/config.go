@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// LoadConfig - Load Config
 func LoadConfig(filename string) {
 	viper.SetConfigType("yaml")
 
@@ -18,6 +19,7 @@ func LoadConfig(filename string) {
 		panic(fmt.Errorf("Fatal error config file: %s", err))
 	}
 
-	viper.SetDefault("mysql.max_connections", 150)
+	viper.SetDefault("mysql.max_idle_connections", 5)
+	viper.SetDefault("mysql.max_connections", 25)
 	viper.SetDefault("mysql.max_lifetime", time.Second*5)
 }
