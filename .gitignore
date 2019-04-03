@@ -13,6 +13,10 @@ mysql/
 
 debug
 
+_TestData
+
+ipch/
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
