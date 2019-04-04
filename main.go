@@ -25,17 +25,28 @@ import (
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: artifactory-s3-export -stderrthreshold=[INFO|WARN|FATAL] -log_dir=[string]\n")
+	usage := `
+Usage: -
+
+  artifactory-s3-export
+    -stderrthreshold=[INFO|WARN|FATAL]
+    -log_dir=[string]
+    -updateS3Table
+    -dryrun
+
+Arguments: -
+
+`
+
+	fmt.Fprintf(os.Stderr, usage)
 	flag.PrintDefaults()
 	os.Exit(2)
 }
 
 func init() {
-	flag.Usage = usage
-	flag.Parse()
 }
 
-func queryPackages(db *sql.DB, sqliteDb *godb.DB, awsSession *session.Session, repo string) {
+func queryPackages(args *Args, db *sql.DB, sqliteDb *godb.DB, awsSession *session.Session, repo string) {
 	// results, err := db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name <> '.' AND node_path = '.' AND node_type = 1 AND repo = ? LIMIT 1000;", repo)
 	// results, err := db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name <> '.' AND node_path = '.' AND repo = ? LIMIT 1000;", repo)
 	// results, err := db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name <> '.' AND node_type = 1 AND repo = ? LIMIT 1000;", repo)
@@ -107,19 +118,25 @@ func queryPackages(db *sql.DB, sqliteDb *godb.DB, awsSession *session.Session, r
 				Do()
 
 			if selectErr == sql.ErrNoRows {
-				s3Obj, err = awsHelper.UploadFileToS3(awsSession, filePath, s3Key)
-				if err != nil {
-					panic(err.Error())
+				if *args.dryRun == false {
+					s3Obj, err = awsHelper.UploadFileToS3(awsSession, filePath, s3Key)
+					if err != nil {
+						panic(err.Error())
+					}
 				}
 			} else if err != nil {
 				panic(err.Error())
 			}
 
 			s3Obj.NodeID = node.NodeID
-			dbHelper.InsertOrUpdate(sqliteDb, &s3Obj)
+			if *args.dryRun == false {
+				dbHelper.InsertOrUpdate(sqliteDb, &s3Obj)
+			}
 		}
 
-		dbHelper.InsertOrUpdate(sqliteDb, &node)
+		if *args.dryRun == false {
+			dbHelper.InsertOrUpdate(sqliteDb, &node)
+		}
 	}
 
 	fmt.Printf("%s (%d) [%s]\n", repo, i, humanize.Bytes(c))
@@ -144,6 +161,10 @@ func main() {
 	start := time.Now()
 
 	fmt.Println("Export Artifactory to S3...")
+
+	flag.Usage = usage
+	args := parseArgs()
+
 	configHelper.LoadConfig("config")
 
 	db := dbHelper.InitMySQLDb(viper.GetString("mysql.connection_string"))
@@ -170,8 +191,11 @@ func main() {
 		repo := scanner.Text()
 		glog.Info(repo)
 
-		awsHelper.GetS3Objects(awsSession, sqliteDb, repo)
-		queryPackages(db, sqliteDb, awsSession, repo)
+		if *args.updateS3Table && *args.dryRun == false {
+			awsHelper.GetS3Objects(awsSession, sqliteDb, repo)
+		}
+
+		queryPackages(&args, db, sqliteDb, awsSession, repo)
 	}
 
 	if err := scanner.Err(); err != nil {

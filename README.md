@@ -105,3 +105,10 @@ artifactory-s3-export-linux: ELF 64-bit LSB executable, x86-64, version 1 (SYSV)
 ```
 ./artifactory-s3-export -stderrthreshold=INFO | tee artifactory-s3-export.log
 ```
+
+## Arguments
+
+|Argument|Description|
+|---|---|
+|```updateS3Table```|Update S3 Table|
+|```dryRun```|Dry Run|

@@ -5,13 +5,50 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "Run",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
             "env": {},
             "args": [
+                "-stderrthreshold=INFO"
+            ]
+        },
+        {
+            "name": "Run (Update S3 Table)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": [
+                "-updateS3Table",
+                "-stderrthreshold=INFO"
+            ]
+        },
+        {
+            "name": "Run (Dry Run)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": [
+                "-dryrun",
+                "-updateS3Table",
+                "-stderrthreshold=INFO"
+            ]
+        },
+        {
+            "name": "Run (Bad Arg)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/main.go",
+            "env": {},
+            "args": [
+                "-updateS3Tables",
                 "-stderrthreshold=INFO"
             ]
         }
