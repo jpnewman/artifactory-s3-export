@@ -97,13 +97,13 @@ artifactory-s3-export-linux: ELF 64-bit LSB executable, x86-64, version 1 (SYSV)
 ## Run
 
 ```
-./artifactory-s3-export | tee artifactory-s3-export.log
+./artifactory-s3-export |& tee artifactory-s3-export.log
 ```
 
 > Info log level
 
 ```
-./artifactory-s3-export -stderrthreshold=INFO | tee artifactory-s3-export.log
+./artifactory-s3-export -stderrthreshold=INFO |& tee artifactory-s3-export.log
 ```
 
 ## Arguments
