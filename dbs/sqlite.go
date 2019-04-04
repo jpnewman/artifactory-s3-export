@@ -24,6 +24,9 @@ func InitSqliteDb(filename string) *godb.DB {
 	// OPTIONAL: Set default table name building style from struct's name(if active struct doesn't have TableName() method)
 	// db.SetDefaultTableNamer(tablenamer.Plural())
 
+	db.CurrentDB().Exec("PRAGMA journal_mode=WAL;") // Write-Ahead Logging (WAL) journal mode.
+	db.CurrentDB().Exec("PRAGMA synchronous=NORMAL;")
+
 	return db
 }
 

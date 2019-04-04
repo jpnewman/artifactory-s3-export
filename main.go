@@ -46,7 +46,7 @@ Arguments: -
 func init() {
 }
 
-func queryPackages(args *Args, db *sql.DB, sqliteDb *godb.DB, awsSession *session.Session, repo string) {
+func queryPackages(args *Args, db *sql.DB, sqliteDb *godb.DB, repo string) {
 	// results, err := db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name <> '.' AND node_path = '.' AND node_type = 1 AND repo = ? LIMIT 1000;", repo)
 	// results, err := db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name <> '.' AND node_path = '.' AND repo = ? LIMIT 1000;", repo)
 	// results, err := db.Query("SELECT node_id, node_type, repo, node_path, node_name, depth, created, created_by, modified, modified_by, updated, bin_length, sha1_actual, sha1_original, md5_actual, md5_original, sha256, repo_path_checksum FROM artdb.nodes WHERE node_name <> '.' AND node_type = 1 AND repo = ? LIMIT 1000;", repo)
@@ -64,8 +64,6 @@ func queryPackages(args *Args, db *sql.DB, sqliteDb *godb.DB, awsSession *sessio
 		panic(err.Error()) // TODO: Handling error.
 	}
 
-	i := 0
-	c := uint64(0)
 	for results.Next() {
 		var node models.Node
 		err = results.Scan(&node.NodeID,
@@ -91,6 +89,47 @@ func queryPackages(args *Args, db *sql.DB, sqliteDb *godb.DB, awsSession *sessio
 			panic(err.Error()) // TODO: Handling error.
 		}
 
+		if *args.dryRun == false {
+			dbHelper.InsertOrUpdate(sqliteDb, &node)
+		}
+	}
+}
+
+func uploadPackages(args *Args, sqliteDb *godb.DB, awsSession *session.Session, repo string) {
+	nodes := make([]models.Node, 0, 0)
+	err := sqliteDb.SelectFrom("Node").
+		Columns("node_id",
+			"node_type",
+			"repo",
+			"node_path",
+			"node_name",
+			"depth",
+			"created",
+			"created_by",
+			"modified",
+			"modified_by",
+			"updated",
+			"bin_length",
+			"sha1_actual",
+			"sha1_original",
+			"md5_actual",
+			"md5_original",
+			"sha256",
+			"repo_path_checksum",
+			"repo_file_path",
+			"repo_file_size",
+			"repo_file_error").
+		Where("repo = ?", repo).
+		OrderBy("node_id").
+		Do(&nodes)
+
+	if err != nil {
+		panic(err.Error()) // TODO: Handling error.
+	}
+
+	i := 0
+	c := uint64(0)
+	for _, node := range nodes {
 		i++
 		c += node.BinLength
 		if node.Sha1Actual.Valid == true {
@@ -132,10 +171,6 @@ func queryPackages(args *Args, db *sql.DB, sqliteDb *godb.DB, awsSession *sessio
 			if *args.dryRun == false {
 				dbHelper.InsertOrUpdate(sqliteDb, &s3Obj)
 			}
-		}
-
-		if *args.dryRun == false {
-			dbHelper.InsertOrUpdate(sqliteDb, &node)
 		}
 	}
 
@@ -195,7 +230,8 @@ func main() {
 			awsHelper.GetS3Objects(awsSession, sqliteDb, repo)
 		}
 
-		queryPackages(&args, db, sqliteDb, awsSession, repo)
+		queryPackages(&args, db, sqliteDb, repo)
+		uploadPackages(&args, sqliteDb, awsSession, repo)
 	}
 
 	if err := scanner.Err(); err != nil {
