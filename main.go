@@ -146,6 +146,10 @@ func uploadPackages(args *Args, sqliteDb *godb.DB, awsSession *session.Session, 
 				node.RepoFileError = ""
 			}
 
+			if *args.dryRun == false {
+				dbHelper.InsertOrUpdate(sqliteDb, &node)
+			}
+
 			glog.Infof("  %d: %s - %s/%s (%s)\n", i, node.NodeName, node.Sha1Actual.String[0:2], node.Sha1Actual.String, humanize.Bytes(node.BinLength))
 		} else {
 			glog.Infof("  %d: %s - NULL/NULL (%s)\n", i, node.NodeName, humanize.Bytes(node.BinLength))
