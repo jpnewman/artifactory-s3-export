@@ -110,5 +110,5 @@ artifactory-s3-export-linux: ELF 64-bit LSB executable, x86-64, version 1 (SYSV)
 
 |Argument|Description|
 |---|---|
-|```updateS3Table```|Update S3 Table|
-|```dryRun```|Dry Run|
+|```-updateS3Table```|Update S3 Table|
+|```-dryRun```|Dry Run|
