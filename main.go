@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 	"path"
+	"regexp"
+	"strings"
 	"time"
 
 	awsHelper "github.com/jpnewman/artifactory-s3-export/aws"
@@ -229,9 +231,15 @@ func main() {
 	}
 	defer file.Close()
 
+	var lineRegEx = regexp.MustCompile(`(^#.*$|^\s*$)`)
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		repo := scanner.Text()
+		repo := strings.TrimSpace(scanner.Text())
+		if len(repo) == 0 || lineRegEx.MatchString(repo) {
+			continue
+		}
+
 		glog.Info(repo)
 
 		if *args.updateS3Table && *args.dryRun == false {
